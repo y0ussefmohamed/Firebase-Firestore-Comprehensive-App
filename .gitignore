@@ -1,0 +1,33 @@
+# Xcode
+#
+# gitignore contributors: remember to update Global/Xcode.gitignore, Objective-C.gitignore & Swift.gitignore
+
+## User settings
+xcuserdata/
+
+## Apple designs
+*.mode1v3
+*.mode2v3
+*.perspectivev3
+
+## Xcode 8 and later
+## Archive
+*.xcresult
+
+## macOS
+##
+.DS_Store
+
+## Build results
+build/
+DerivedData/
+
+## Dependency directories
+##
+## It is not recommended to check in your Pods directory.
+## https://guides.cocoapods.org/using/using-cocoapods.html#should-i-check-the-pods-directory-into-source-control
+# Pods/
+# Carthage/Build/
+
+## Firebase
+GoogleService-Info.plist
