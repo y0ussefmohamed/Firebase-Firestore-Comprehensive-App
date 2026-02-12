@@ -28,13 +28,13 @@ final class AuthenticationViewModel: ObservableObject {
         let authDataResult = try await authManager.signInGoogle(tokens: tokens)
         let dbUser = DBUser(authDataUser: authDataResult)
         
-        try userManager.createNewUser(from: dbUser)
+        try await userManager.createNewUserIfNeeded(from: dbUser)
     }
     
     func signInAnonymously() async throws {
         let authDataResult = try await authManager.signInAnonymously()
         let dbUser = DBUser(authDataUser: authDataResult)
         
-        try userManager.createNewUser(from: dbUser)
+        try await userManager.createNewUserIfNeeded(from: dbUser)
     }
 }

@@ -7,330 +7,290 @@
 
 import SwiftUI
 
-
 struct ProfileView: View {
     @StateObject private var viewModel = ProfileViewModel()
     @Binding var showSignInView: Bool
     
     let preferenceOptions: [String] = ["Sport", "Movie", "Book"]
+    
     private func preferenceIsSelected(_ option: String) -> Bool {
-        viewModel.user?
-            .preferences?
-            .contains(option) == true
+        viewModel.user?.preferences?.contains(option) == true
     }
     
     var body: some View {
         List {
             if let user = viewModel.user {
-                VStack(alignment: .leading, spacing: 15) {
-                    Text("Account Information")
-                        .font(.caption)
-                        .fontWeight(.bold)
-                        .foregroundColor(.secondary)
-                        .textCase(.uppercase)
-                        .padding(.leading, 4)
-
-                    VStack(spacing: 0) {
-                        // Email Row (if exists)
-                        if let email = user.email, !email.isEmpty {
-                            infoRow(title: "Email", value: email, icon: "envelope.fill", color: .blue)
-                            Divider().padding(.leading, 44)
-                        }
-                        
-                        // Account Type / Anonymous Row
-                        let isAnonymous = user.isAnonymous ?? false
-                        infoRow(
-                            title: "Account Type",
-                            value: isAnonymous ? "Guest Account" : "Registered User",
-                            icon: isAnonymous ? "person.badge.key.fill" : "person.text.rectangle.fill",
-                            color: isAnonymous ? .orange : .green
-                        )
-                        
-                        Divider().padding(.leading, 44)
-                        
-                        // User ID Row
-                        infoRow(title: "User ID", value: user.userId, icon: "number", color: .gray)
-                            .contextMenu {
-                                Button {
-                                    UIPasteboard.general.string = user.userId
-                                } label: {
-                                    Label("Copy ID", systemImage: "doc.on.doc")
-                                }
-                            }
-                    }
-                    .background(Color(.secondarySystemBackground))
-                    .cornerRadius(12)
+                // 1. SLIM LUXURY PREMIUM CARD
+                Section {
+                    premiumCard(user: user)
                 }
-                .padding(.horizontal)
-
+                .listRowInsets(EdgeInsets())
+                .listRowBackground(Color.clear)
+                .listRowSeparator(.hidden)
+                .padding(.bottom, 10)
                 
-                Button {
-                    viewModel.togglePremiumStatus()
-                } label: {
-                    ZStack {
-                        // Background layer: Changes to a gradient if premium
-                        RoundedRectangle(cornerRadius: 16, style: .continuous)
-                            .fill(
-                                user.isPremium ?? false ?
-                                LinearGradient(colors: [.indigo, .purple], startPoint: .topLeading, endPoint: .bottomTrailing) :
-                                LinearGradient(colors: [Color(.secondarySystemBackground)], startPoint: .top, endPoint: .bottom)
+                // 2. ACCOUNT INFORMATION
+                Section {
+                    VStack(alignment: .leading, spacing: 0) {
+                        Text("Account Details")
+                            .font(.caption2)
+                            .fontWeight(.bold)
+                            .foregroundColor(.secondary)
+                            .textCase(.uppercase)
+                            .padding(.bottom, 8)
+                            .padding(.leading, 4)
+                        
+                        VStack(spacing: 0) {
+                            if let email = user.email, !email.isEmpty {
+                                infoRow(title: "Email", value: email, icon: "envelope.fill", color: .blue)
+                                Divider().padding(.leading, 44)
+                            }
+                            
+                            let isAnonymous = user.isAnonymous ?? false
+                            infoRow(
+                                title: "Account Type",
+                                value: isAnonymous ? "Guest Account" : "Registered User",
+                                icon: isAnonymous ? "person.badge.key.fill" : "person.text.rectangle.fill",
+                                color: isAnonymous ? .orange : .green
                             )
-                        
-                        HStack {
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text("Membership Status")
-                                    .font(.footnote)
-                                    .fontWeight(.semibold)
-                                    .foregroundColor((user.isPremium ?? false) ? .white.opacity(0.8) : .secondary)
-                                
-                                premiumStatusText(user: user)
-                            }
                             
-                            Spacer()
+                            Divider().padding(.leading, 44)
                             
-                            // A "Toggle" indicator
-                            Text((user.isPremium ?? false) ? "Manage" : "Upgrade")
-                                .font(.subheadline)
-                                .fontWeight(.bold)
-                                .padding(.horizontal, 16)
-                                .padding(.vertical, 8)
-                                .background((user.isPremium ?? false) ? .white.opacity(0.2) : .blue)
-                                .foregroundColor(.white)
-                                .clipShape(Capsule())
+                            infoRow(title: "User ID", value: user.userId, icon: "number", color: .gray)
                         }
-                        .padding(.horizontal, 20)
-                        .padding(.vertical, 16)
+                        .background(Color(.secondarySystemBackground))
+                        .cornerRadius(12)
                     }
                 }
-                .buttonStyle(.plain)
-                .padding(.horizontal)
-                .shadow(color: (user.isPremium ?? false) ? .purple.opacity(0.3) : .clear, radius: 10, x: 0, y: 5)
+                .listRowInsets(EdgeInsets(top: 8, leading: 20, bottom: 8, trailing: 20))
+                .listRowBackground(Color.clear)
+                .listRowSeparator(.hidden)
                 
-                genresDisplay(user: user)
+                // 3. GENRE PREFERENCES
+                Section {
+                    genresDisplay(user: user)
+                }
+                .listRowInsets(EdgeInsets(top: 8, leading: 20, bottom: 8, trailing: 20))
+                .listRowBackground(Color.clear)
+                .listRowSeparator(.hidden)
                 
-                VStack(alignment: .leading, spacing: 12) {
-                    Text("Account Preferences")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                        .fontWeight(.bold)
-                        .padding(.leading, 4)
-
+                // 4. FAVORITE MOVIE
+                Section {
                     movieDisplay(user: user)
                 }
-                .padding(.horizontal)
-                
-                NavigationLink {
-                    FavoriteProductsView()
-                } label: {
-                    HStack(spacing: 12) {
-                        Image(systemName: "heart.fill")
-                            .font(.footnote)
-                            .frame(width: 28, height: 28)
-                            .background(Color.red.opacity(0.1))
-                            .foregroundColor(.red)
-                            .clipShape(RoundedRectangle(cornerRadius: 6))
-                        
-                        Text("Favorite Products in DB")
-                            .font(.subheadline)
-                            .fontWeight(.medium)
-                        
-                        Spacer()
-                    }
-                    .padding(.vertical, 8)
-                }
+                .listRowInsets(EdgeInsets(top: 8, leading: 20, bottom: 20, trailing: 20))
+                .listRowBackground(Color.clear)
+                .listRowSeparator(.hidden)
             }
         }
+        .listStyle(.plain)
         .task {
             try? await viewModel.loadCurrentUser()
         }
         .navigationTitle("Profile")
         .toolbar {
-            
             ToolbarItem(placement: .topBarTrailing) {
                 NavigationLink {
                     SettingsView(showSignInView: $showSignInView)
                 } label: {
                     Image(systemName: "gear")
-                        .font(.headline)
+                        .font(.subheadline)
                 }
             }
-            
         }
     }
 }
 
-// MARK: - Helper View
-@ViewBuilder
-private func infoRow(title: String, value: String, icon: String, color: Color) -> some View {
-    HStack(spacing: 12) {
-        Image(systemName: icon)
-            .font(.footnote)
-            .frame(width: 28, height: 28)
-            .background(color.opacity(0.1))
-            .foregroundColor(color)
-            .clipShape(RoundedRectangle(cornerRadius: 6))
-        
-        VStack(alignment: .leading, spacing: 2) {
-            Text(title)
-                .font(.caption2)
-                .foregroundColor(.secondary)
-            Text(value)
-                .font(.subheadline)
-                .fontWeight(.medium)
-                .lineLimit(1)
-                .truncationMode(.middle)
-        }
-        
-        Spacer()
-        
-        // --- ADDED THIS PART ---
-        if title == "User ID" {
-            Button {
-                UIPasteboard.general.string = value
-                // Optional: Add a haptic feedback "bump"
-                UIImpactFeedbackGenerator(style: .light).impactOccurred()
-            } label: {
-                Image(systemName: "doc.on.doc")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                    .padding(8)
-                    .background(Color.secondary.opacity(0.1))
-                    .clipShape(Circle())
-            }
-            .buttonStyle(.plain) // Prevents the whole row from flashing when tapped
-        }
-    }
-    .padding()
-}
-
+// MARK: - Components
 extension ProfileView {
-    func premiumStatusText(user: DBUser) -> some View {
+    
+    @ViewBuilder
+    private func premiumCard(user: DBUser) -> some View {
         let isPremium = user.isPremium ?? false
         
-        return HStack(spacing: 4) {
-            Text(isPremium ? "PREMIUM" : "FREE")
-                .font(.caption)
-                .fontWeight(.black)
+        Button {
+            viewModel.togglePremiumStatus()
+        } label: {
+            ZStack {
+                // Background
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .fill(
+                        isPremium ?
+                        LinearGradient(colors: [Color(white: 0.08), Color(white: 0.15)], startPoint: .topLeading, endPoint: .bottomTrailing) :
+                        LinearGradient(colors: [Color(.systemGray6)], startPoint: .top, endPoint: .bottom)
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 16)
+                            .strokeBorder(isPremium ? Color.gold.opacity(0.4) : Color.clear, lineWidth: 0.5)
+                    )
+                
+                HStack(spacing: 12) {
+                    // Shrunken Icon
+                    ZStack {
+                        Circle()
+                            .fill(isPremium ? Color.gold.opacity(0.15) : Color.gray.opacity(0.1))
+                            .frame(width: 40, height: 40)
+                        
+                        Image(systemName: isPremium ? "crown.fill" : "star.fill")
+                            .font(.system(size: 16, weight: .bold))
+                            .foregroundStyle(isPremium ? Color.gold : .secondary)
+                    }
+                    
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(isPremium ? "Premium Member" : "Standard Plan")
+                            .font(.subheadline)
+                            .fontWeight(.bold)
+                            .foregroundColor(isPremium ? .white : .primary)
+                        
+                        Text(isPremium ? "Exclusive perks active" : "Get more features")
+                            .font(.caption2)
+                            .foregroundColor(isPremium ? Color.gold.opacity(0.8) : .secondary)
+                    }
+                    
+                    Spacer()
+                    
+                    // Slimmer Action Label
+                    Text(isPremium ? "MANAGE" : "UPGRADE")
+                        .font(.system(size: 10, weight: .black))
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 6)
+                        .background(isPremium ? Color.gold : Color.blue)
+                        .foregroundColor(isPremium ? .black : .white)
+                        .clipShape(Capsule())
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 14) // Reduced vertical padding
+            }
+            .padding(.horizontal, 20)
+            .padding(.top, 10)
+            .shadow(color: isPremium ? Color.black.opacity(0.3) : Color.black.opacity(0.05), radius: 8, x: 0, y: 4)
+        }
+        .buttonStyle(.plain)
+    }
+
+    @ViewBuilder
+    private func infoRow(title: String, value: String, icon: String, color: Color) -> some View {
+        HStack(spacing: 12) {
+            Image(systemName: icon)
+                .font(.system(size: 12))
+                .frame(width: 28, height: 28)
+                .background(color.opacity(0.1))
+                .foregroundColor(color)
+                .clipShape(RoundedRectangle(cornerRadius: 8))
             
-            if isPremium {
-                Image(systemName: "checkmark.seal.fill")
+            VStack(alignment: .leading, spacing: 1) {
+                Text(title)
+                    .font(.system(size: 9, weight: .bold))
+                    .foregroundColor(.secondary)
+                    .textCase(.uppercase)
+                Text(value)
+                    .font(.footnote)
+                    .fontWeight(.medium)
+                    .lineLimit(1)
+            }
+            
+            Spacer()
+            
+            if title == "User ID" {
+                Button {
+                    UIPasteboard.general.string = value
+                    UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                } label: {
+                    Image(systemName: "doc.on.doc")
+                        .font(.system(size: 10))
+                        .foregroundColor(.secondary)
+                        .padding(6)
+                        .background(Color.secondary.opacity(0.1))
+                        .clipShape(Circle())
+                }
+                .buttonStyle(.plain)
             }
         }
-        .foregroundColor(isPremium ? .yellow : .secondary)
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
     }
     
-    func movieDisplay(user: DBUser) -> some View {
+    private func movieDisplay(user: DBUser) -> some View {
         Button {
-            if user.favoriteMovie == nil {
-                viewModel.addFavoriteMovie()
-            } else {
-                viewModel.removeFavoriteMovie()
-            }
+            user.favoriteMovie == nil ? viewModel.addFavoriteMovie() : viewModel.removeFavoriteMovie()
         } label: {
-            HStack {
+            HStack(spacing: 12) {
                 Image(systemName: "popcorn.fill")
-                    .font(.title2)
-                    .symbolRenderingMode(.hierarchical)
-                    .foregroundStyle(.orange)
+                    .font(.subheadline)
+                    .foregroundStyle(.orange.gradient)
+                    .frame(width: 36, height: 36)
+                    .background(Color.orange.opacity(0.1))
+                    .clipShape(RoundedRectangle(cornerRadius: 10))
                 
-                VStack(alignment: .leading, spacing: 4) {
+                VStack(alignment: .leading, spacing: 1) {
                     Text("Favorite Movie")
-                        .font(.footnote)
+                        .font(.system(size: 10))
                         .foregroundColor(.secondary)
                     
                     if let title = user.favoriteMovie?.title {
                         Text(title)
-                            .font(.headline)
-                            .foregroundColor(.primary)
+                            .font(.subheadline)
+                            .fontWeight(.semibold)
                     } else {
-                        Text("None selected")
-                            .font(.headline)
-                            .italic()
-                            .foregroundColor(.gray.opacity(0.6))
+                        Text("Add a Movie")
+                            .font(.subheadline)
+                            .foregroundColor(.secondary.opacity(0.5))
                     }
                 }
                 
                 Spacer()
                 
                 Image(systemName: "chevron.right")
-                    .font(.footnote)
-                    .foregroundColor(.gray)
+                    .font(.system(size: 10, weight: .bold))
+                    .foregroundColor(.secondary.opacity(0.4))
             }
-            .padding()
-            .background(
-                RoundedRectangle(cornerRadius: 16)
-                    .fill(Color(.secondarySystemBackground))
-                    .shadow(color: .black.opacity(0.05), radius: 5, x: 0, y: 2)
-            )
+            .padding(12)
+            .background(Color(.secondarySystemBackground))
+            .cornerRadius(12)
         }
+        .buttonStyle(.plain)
     }
     
-    func genresDisplay(user: DBUser) -> some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text("Genre Preferences")
-                .font(.headline)
+    private func genresDisplay(user: DBUser) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("Your Preferences")
+                .font(.caption2)
+                .fontWeight(.bold)
+                .foregroundColor(.secondary)
+                .textCase(.uppercase)
                 .padding(.leading, 4)
             
-            // Using a Flow-like layout approach
             ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 10) {
+                HStack(spacing: 8) {
                     ForEach(preferenceOptions, id: \.self) { option in
                         let isSelected = preferenceIsSelected(option)
-                        
                         Button {
-                            if isSelected {
-                                viewModel.removeUserPreferences(option)
-                            } else {
-                                viewModel.addUserPreferences(option)
-                            }
+                            isSelected ? viewModel.removeUserPreferences(option) : viewModel.addUserPreferences(option)
                         } label: {
-                            HStack(spacing: 6) {
-                                Text(option)
-                                if isSelected {
-                                    Image(systemName: "checkmark.circle.fill")
-                                        .transition(.scale.combined(with: .opacity))
-                                }
-                            }
-                            .padding(.horizontal, 16)
-                            .padding(.vertical, 8)
-                            .background(
-                                Capsule()
-                                    .fill(isSelected ? Color.green.opacity(0.2) : Color.secondary.opacity(0.1))
-                            )
-                            .overlay(
-                                Capsule()
-                                    .strokeBorder(isSelected ? Color.green : Color.clear, lineWidth: 1)
-                            )
-                            .foregroundColor(isSelected ? .green : .primary)
+                            Text(option)
+                                .font(.system(size: 12, weight: .medium))
+                                .padding(.horizontal, 14)
+                                .padding(.vertical, 8)
+                                .background(isSelected ? Color.green : Color(.secondarySystemBackground))
+                                .foregroundColor(isSelected ? .white : .primary)
+                                .clipShape(Capsule())
                         }
-                        .buttonStyle(.plain) // Removes the default button "flash"
-                        .animation(.spring(response: 0.3, dampingFraction: 0.6), value: isSelected)
+                        .buttonStyle(.plain)
+                        .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isSelected)
                     }
                 }
-                .padding(.horizontal, 4)
-            }
-            
-            // A more subtle way to show the summary
-            if let prefs = user.preferences, !prefs.isEmpty {
-                HStack {
-                    Image(systemName: "line.3.horizontal.decrease.circle")
-                    Text("Filtered by: \(prefs.joined(separator: " • "))")
-                }
-                .font(.caption)
-                .foregroundColor(.secondary)
-                .padding(.top, 4)
             }
         }
-        .padding()
     }
+}
+
+// MARK: - Extensions
+extension Color {
+    static let gold = Color(red: 212/255, green: 175/255, blue: 55/255)
 }
 
 #Preview {
     NavigationStack {
         ProfileView(showSignInView: .constant(false))
     }
-}
-
-extension Color {
-    static let gold = Color(red: 212/255, green: 175/255, blue: 55/255)
 }

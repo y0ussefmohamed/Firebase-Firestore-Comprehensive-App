@@ -10,6 +10,7 @@ import SwiftUI
 struct SettingsView: View {
     
     @StateObject private var viewModel = SettingsViewModel()
+    @EnvironmentObject private var productsViewModel: ProductsViewModel
     @Binding var showSignInView: Bool
     @State private var showDeleteAlert = false
     
@@ -110,6 +111,7 @@ extension SettingsView {
     private func logout() {
         do {
             try viewModel.logout()
+            productsViewModel.resetUserState()
             showSignInView = true
         } catch {
             print("Error logging out: \(error)")
@@ -120,6 +122,7 @@ extension SettingsView {
         Task {
             do {
                 try await viewModel.deleteAccount()
+                productsViewModel.resetUserState()
                 showSignInView = true
             } catch {
                 print("Error deleting account: \(error)")
@@ -161,5 +164,6 @@ struct SettingsLabel: View {
 #Preview {
     NavigationStack {
         SettingsView(showSignInView: .constant(false))
+            .environmentObject(ProductsViewModel())
     }
 }

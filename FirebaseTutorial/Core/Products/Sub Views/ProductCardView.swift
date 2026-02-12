@@ -13,12 +13,10 @@ struct ProductCardView: View {
     let product: Product
 
     
-    @State private var isFavorite: Bool
+    @State private var isFavorite: Bool = false
     
     init(product: Product) {
         self.product = product
-        // Initialize state from the passed product
-        _isFavorite = State(initialValue: product.is_favorite ?? false)
     }
     
     
@@ -30,11 +28,14 @@ struct ProductCardView: View {
         .background(Color(uiColor: .systemBackground))
         .cornerRadius(16)
         .shadow(color: .black.opacity(0.1), radius: 5, x: 0, y: 2)
-        .onChange(of: viewModel.favoriteProducts) { oldValue, newValue in
-            let currentlyInFavorites = newValue.contains(where: { $0.id == product.id })
+        .onChange(of: viewModel.favoriteProductIds) { oldValue, newValue in
+            let currentlyInFavorites = newValue.contains(product.id)
             if isFavorite != currentlyInFavorites {
                 isFavorite = currentlyInFavorites
             }
+        }
+        .onAppear {
+            isFavorite = viewModel.isFavorite(product)
         }
     }
     

@@ -34,6 +34,7 @@ struct ProductsView: View {
                 ToolbarItem(placement: .navigationBarTrailing) { categoryMenu }
             }
             .task {
+                await viewModel.getFavorites()
                 await updateProducts()
             }
             .onChange(of: selectedCategory)   { oldValue, newValue in Task { await updateProducts() } }
@@ -65,7 +66,6 @@ struct ProductsView: View {
                 }
             }
         } else {
-            // Specific Category Logic
             if let descending = selectedSortOption.isDescending {
                 if isFilteredByPrice {
                     viewModel.getProductsByPriceRangeWithSortingOptionForCategory(startAt: start, endAt: end, category: selectedCategory.rawValue, sortOption: descending)
@@ -191,6 +191,15 @@ extension ProductsView {
         LazyVGrid(columns: columns, spacing: 20) {
             ForEach(viewModel.products) { product in
                 ProductCardView(product: product)
+                    .onAppear {
+                        // Trigger pagination when the last item appears on screen
+                        if product.id == viewModel.products.last?.id {
+                            print("[View] Last product appeared — triggering getNextPage()")
+                            Task {
+                                await viewModel.getNextPage()
+                            }
+                        }
+                    }
             }
         }
         .padding()

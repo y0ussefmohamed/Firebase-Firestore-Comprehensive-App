@@ -37,8 +37,10 @@ struct FavoriteProductsView: View {
                 }
             }
             .navigationTitle("Favorites")
-            .task {
-                await viewModel.getFavorites()
+            .onAppear {
+                Task {
+                    await viewModel.getFavorites()
+                }
             }
         }
     }

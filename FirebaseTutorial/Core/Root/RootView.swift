@@ -11,21 +11,7 @@ struct RootView: View {
     @State private var showSignInView: Bool = false
     
     var body: some View {
-        TabView {
-            NavigationStack {
-                ProductsView()
-            }
-            .tabItem {
-                Label("Products", systemImage: "cart")
-            }
-            
-            NavigationStack {
-                ProfileView(showSignInView: $showSignInView)
-            }
-            .tabItem {
-                Label("Profile", systemImage: "person.circle")
-            }
-        }
+        TabBarView(showSignInView: $showSignInView)
         .onAppear {
             let authUser = try? AuthenticationManager.shared.getAuthenticatedUser()
             

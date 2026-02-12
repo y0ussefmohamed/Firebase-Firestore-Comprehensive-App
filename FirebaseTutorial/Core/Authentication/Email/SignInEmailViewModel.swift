@@ -25,7 +25,7 @@ final class SignInEmailViewModel: ObservableObject {
         let authDataResult = try await authManager.createUser(email: email, password: password)
         let dbUser = DBUser(authDataUser: authDataResult)
         
-        try userManager.createNewUser(from: dbUser)
+        try await userManager.createNewUserIfNeeded(from: dbUser)
     }
     
     func signIn() async throws {

@@ -18,6 +18,50 @@ final class ProductsManager {
         productsCollection.document(productId)
     }
     
+    // MARK: - Pagination
+    func getAllProductsPaginated(
+        count: Int,
+        lastDocument: DocumentSnapshot?,
+        descending: Bool?,
+        category: String?,
+        priceRange: ClosedRange<Double>? ) async throws -> (products: [Product], lastDocument: DocumentSnapshot?) {
+        
+        var query: Query = productsCollection
+        
+        if let category {
+            print("[Pagination] Filtering by category: \(category)")
+            query = query.whereField(Product.CodingKeys.category.rawValue, isEqualTo: category)
+        }
+        
+        if let priceRange {
+            print("[Pagination] Filtering by price range: \(priceRange.lowerBound) - \(priceRange.upperBound)")
+            query = query
+                .whereField(Product.CodingKeys.price.rawValue, isGreaterThanOrEqualTo: priceRange.lowerBound)
+                .whereField(Product.CodingKeys.price.rawValue, isLessThanOrEqualTo: priceRange.upperBound)
+        }
+        
+        if let descending {
+            print("[Pagination] Sorting by price, descending: \(descending)")
+            query = query.order(by: Product.CodingKeys.price.rawValue, descending: descending)
+        } else if priceRange != nil {
+            query = query.order(by: Product.CodingKeys.price.rawValue, descending: false)
+        }
+        
+        query = query
+            .limit(to: count)
+            .startOptionally(afterDocument: lastDocument)
+        
+        print("[Pagination] Fetching page | limit: \(count) | hasLastDocument: \(lastDocument != nil)")
+        
+        let result = try await query.getDocumentsWithSnapshot(as: Product.self)
+        
+        print("[Pagination] Fetched \(result.products.count) products")
+        
+        return result
+    }
+}
+
+extension ProductsManager {
     func uploadProduct(product: Product) async throws {
         try productDocument(productId: String(product.id)).setData(from: product, merge: false)
     }
@@ -35,7 +79,7 @@ final class ProductsManager {
         return try await productsCollection.getDocuments(as: Product.self)
     }
     
-    // MARK: - Queries
+    // MARK: - Queries (Old Non-Paginated Functions)
     func getProductsSortedByPrice(descending: Bool = false) async throws -> [Product] {
         return try await productsCollection
             .order(by: Product.CodingKeys.price.rawValue, descending: descending).getDocuments(as: Product.self)
@@ -51,13 +95,6 @@ final class ProductsManager {
         return try await productsCollection
             .whereField(Product.CodingKeys.category.rawValue, isEqualTo: category)
             .order(by: Product.CodingKeys.price.rawValue, descending: descending)
-            .getDocuments(as: Product.self)
-    }
-    
-    func getProductsByRating(count: Int) async throws -> [Product] {
-        return try await productsCollection
-            .order(by: Product.CodingKeys.rating.rawValue, descending: true)
-            .limit(to: count)
             .getDocuments(as: Product.self)
     }
     
@@ -94,66 +131,4 @@ final class ProductsManager {
             .getDocuments(as: Product.self)
     }
     
-    // MARK: - Favorite
-    func favoriteProduct(productId: String) async throws {
-        let updates: [String: Any] = [
-            Product.CodingKeys.is_favorite.rawValue: true
-        ]
-        
-        try await productDocument(productId: productId).updateData(updates)
-    }
-    
-    func unfavoriteProduct(productId: String) async throws {
-        let updates: [String: Any] = [
-            Product.CodingKeys.is_favorite.rawValue: false
-        ]
-        
-        try await productDocument(productId: productId).updateData(updates)
-    }
-    
-    func getFavoriteProducts() async throws -> [Product] {
-        return try await productsCollection
-            .whereField(Product.CodingKeys.is_favorite.rawValue, isEqualTo: true).getDocuments(as: Product.self)
-    }
-    
-    // MARK: - Pagination
-}
-
-
-extension Query {
-    
-    func getDocuments<T>(as type: T.Type) async throws -> [T] where T : Decodable {
-        try await getDocumentsWithSnapshot(as: type).products
-    }
-    
-    func getDocumentsWithSnapshot<T>(as type: T.Type) async throws -> (products: [T], lastDocument: DocumentSnapshot?) where T : Decodable {
-        let snapshot = try await self.getDocuments()
-        
-        let products = try snapshot.documents.map({ document in
-            try document.data(as: T.self)
-        })
-        
-        return (products, snapshot.documents.last)
-    }
-    
-    func startOptionally(afterDocument lastDocument: DocumentSnapshot?) -> Query {
-        guard let lastDocument else { return self }
-        return self.start(afterDocument: lastDocument)
-    }
-    
-    func addSnapshotListener<T>(as type: T.Type) -> (AnyPublisher<[T], Error>, ListenerRegistration) where T : Decodable {
-        let publisher = PassthroughSubject<[T], Error>()
-        
-        let listener = self.addSnapshotListener { querySnapshot, error in
-            guard let documents = querySnapshot?.documents else {
-                print("No documents")
-                return
-            }
-            
-            let products: [T] = documents.compactMap({ try? $0.data(as: T.self) })
-            publisher.send(products)
-        }
-        
-        return (publisher.eraseToAnyPublisher(), listener)
-    }
 }

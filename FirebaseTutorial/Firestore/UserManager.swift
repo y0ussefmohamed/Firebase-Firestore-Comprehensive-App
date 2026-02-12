@@ -31,6 +31,7 @@ struct DBUser: Codable {
     let isPremium: Bool?
     let preferences: [String]?
     let favoriteMovie: Movie?
+    let favorite_products: [Product]?
     
     enum CodingKeys: String, CodingKey {
         case userId = "user_id"
@@ -41,6 +42,7 @@ struct DBUser: Codable {
         case isPremium = "is_premium"
         case preferences
         case favoriteMovie = "favorite_movie"
+        case favorite_products = "favorite_products"
     }
     
     /*
@@ -68,6 +70,7 @@ extension DBUser {
         self.isPremium = false
         self.preferences = nil
         self.favoriteMovie = nil
+        self.favorite_products = nil
     }
 }
 
@@ -84,6 +87,21 @@ final class UserManager {
     
     func createNewUser(from user: DBUser) throws {
         try userDocument(userID: user.userId).setData(from: user, merge: false)
+    }
+    
+    /// Creates the user document ONLY if it doesn't already exist.
+    /// Prevents overwriting existing data (favorites, preferences, etc.) on re-login.
+    func createNewUserIfNeeded(from user: DBUser) async throws {
+        let document = userDocument(userID: user.userId)
+        let snapshot = try await document.getDocument()
+        
+        if snapshot.exists {
+            print("[UserManager] User \(user.userId) already exists — skipping creation")
+            return
+        }
+        
+        try document.setData(from: user, merge: false)
+        print("[UserManager] Created new user document for \(user.userId)")
     }
     
     func getUser(userID: String) async throws -> DBUser {
@@ -130,5 +148,52 @@ final class UserManager {
         ]
         
         try await userDocument(userID: user.userId).updateData(updates as [AnyHashable : Any])
+    }
+    
+    
+    // MARK: - User Favorite Products
+    func addFavoriteProduct(product: Product, for user: DBUser) async throws {
+        let encodedProduct = try Firestore.Encoder().encode(product)
+        
+        let updates: [String: Any] = [ 
+            DBUser.CodingKeys.favorite_products.rawValue : FieldValue.arrayUnion([encodedProduct])
+        ]
+        
+        try await userDocument(userID: user.userId).updateData(updates)
+    }
+    
+    func removeFavoriteProduct(product: Product, for user: DBUser) async throws {
+        let encodedProduct = try Firestore.Encoder().encode(product)
+        
+        let updates: [String: Any] = [ 
+            DBUser.CodingKeys.favorite_products.rawValue : FieldValue.arrayRemove([encodedProduct])
+        ]
+        
+        try await userDocument(userID: user.userId).updateData(updates)
+    }
+    
+    func getFavoriteProducts(for user: DBUser) async throws -> [Product] {
+        let document = try await userDocument(userID: user.userId).getDocument()
+        
+        guard let favoriteProductsData = document.data()?[DBUser.CodingKeys.favorite_products.rawValue] as? [[String: Any]] else {
+            return []
+        }
+        
+        // Decode each product dictionary into a Product using Firestore.Decoder
+        let decoder = Firestore.Decoder()
+        var products: [Product] = []
+        products.reserveCapacity(favoriteProductsData.count)
+        
+        for productMap in favoriteProductsData {
+            do {
+                let decoded = try decoder.decode(Product.self, from: productMap)
+                products.append(decoded)
+            } catch {
+                print("[UserManager] Failed to decode favorite product: \(error)")
+                continue
+            }
+        }
+        
+        return products
     }
 }
