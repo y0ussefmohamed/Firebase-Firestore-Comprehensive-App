@@ -2,7 +2,7 @@
 
 A robust, feature-rich iOS application built with **SwiftUI** and **Firebase**, demonstrating advanced integration of Firestore, Authentication, and scalable MVVM architecture.
 
-## 🚀 Features
+## Features
 
 - **Multi-Method Authentication**:
   - Secure Email & Password sign-up/log-in.
@@ -21,7 +21,7 @@ A robust, feature-rich iOS application built with **SwiftUI** and **Firebase**, 
   - Dependency injection and environment object management.
   - Scalable folder structure for growing projects.
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 - **Language**: Swift 5+
 - **Framework**: SwiftUI
@@ -30,7 +30,7 @@ A robust, feature-rich iOS application built with **SwiftUI** and **Firebase**, 
   - Cloud Firestore
 - **Tools**: Xcode, Google Sign-In SDK
 
-## 📁 Project Structure
+## Project Structure
 
 ```text
 FirebaseTutorial/
@@ -42,11 +42,7 @@ FirebaseTutorial/
 └── Assets.xcassets       # Images and Brand Assets
 ```
 
-## 📸 Screenshots
-
-_(Add screenshots here to showcase the beautiful UI)_
-
-## ⚙️ Setup Instructions
+## Setup Instructions
 
 1. Clone the repository:
    ```bash
