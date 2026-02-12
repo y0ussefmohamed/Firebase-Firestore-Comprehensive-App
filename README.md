@@ -68,7 +68,7 @@ FirebaseTutorial/
 <<<<<<< HEAD
 ## Setup Instructions
 =======
-## ⚙️ Setup Instructions
+## Setup Instructions
 >>>>>>> e558512 (feat: per-user favorites, pagination, tab bar & safe re-login)
 
 1. Clone the repository:
