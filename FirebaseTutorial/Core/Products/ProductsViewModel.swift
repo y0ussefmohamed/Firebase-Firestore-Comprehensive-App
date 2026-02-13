@@ -15,6 +15,9 @@ final class ProductsViewModel: ObservableObject {
     @Published private(set) var favoriteProducts: [Product] = []
     @Published private(set) var favoriteProductIds: Set<Int> = []
     
+    /// Toggled when the user logs out / deletes account so the View can reset its @State filters
+    @Published var didResetFilters: Bool = false
+    
     let userManager = UserManager.shared
     let productsManager = ProductsManager.shared
     let authManager = AuthenticationManager.shared
@@ -99,6 +102,45 @@ final class ProductsViewModel: ObservableObject {
         }
     }
     
+    // MARK: - User State Management
+    /// Must be called on logout/account deletion
+    func resetUserState() {
+        currentUser = nil
+        favoriteProducts = []
+        favoriteProductIds = []
+        
+        // Reset pagination filters so the next user starts fresh
+        products = []
+        currentDescending = nil
+        currentCategory = nil
+        currentPriceRange = nil
+        lastDocument = nil
+        hasMoreProducts = true
+        
+        // Signal the View to reset its @State sort/category/price fields
+        didResetFilters.toggle()
+        
+        print("[ViewModel] User state reset — cached user, favorites, and filters cleared")
+    }
+    
+    private func loadCurrentUser() async -> DBUser? {
+        if let currentUser { return currentUser }
+        
+        guard let authUser = try? authManager.getAuthenticatedUser() else {
+            print("[ViewModel] No authenticated user found")
+            return nil
+        }
+        
+        do {
+            let user = try await userManager.getUser(userID: authUser.uid)
+            self.currentUser = user
+            return user
+        } catch {
+            print("[ViewModel] Error loading user: \(error)")
+            return nil
+        }
+    }
+    
     // MARK: - Public Query Methods (delegate to getProducts)
     func getAllProducts() async throws {
         await getProducts()
@@ -146,37 +188,26 @@ final class ProductsViewModel: ObservableObject {
         }
     }
     
-    // MARK: - User State Management
-    
-    /// Clears all user-specific cached state. Must be called on logout/account deletion
-    /// so that the next sign-in loads fresh data for the new account.
-    func resetUserState() {
-        currentUser = nil
-        favoriteProducts = []
-        favoriteProductIds = []
-        print("[ViewModel] User state reset — cached user and favorites cleared")
-    }
-    
-    // MARK: - User Loading
-    private func loadCurrentUser() async -> DBUser? {
-        if let currentUser { return currentUser }
-        
-        guard let authUser = try? authManager.getAuthenticatedUser() else {
-            print("[ViewModel] No authenticated user found")
-            return nil
-        }
-        
-        do {
-            let user = try await userManager.getUser(userID: authUser.uid)
-            self.currentUser = user
-            return user
-        } catch {
-            print("[ViewModel] Error loading user: \(error)")
-            return nil
-        }
-    }
-    
     // MARK: - Favorite (Per-User)
+    /// for `FavoritesView`
+    func addListenerForFavorites() async {
+        guard let user = await loadCurrentUser() else { return }
+            
+        userManager.addListenerForFavoriteProducts(userId: user.userId) { [weak self] returnedFavoriteProducts in
+            self?.favoriteProducts = returnedFavoriteProducts
+        }
+    }
+    
+    /// for `ProductsView`
+    func addListenerForFavoritesIds() async {
+        guard let user = await loadCurrentUser() else { return }
+            
+        userManager.addListenerForFavoriteProducts(userId: user.userId) { [weak self] returnedFavoriteProducts in
+            let returnedFavoriteProdcutsIds = Set(returnedFavoriteProducts.map { $0.id })
+            self?.favoriteProductIds = returnedFavoriteProdcutsIds
+        }
+    }
+    
     func favoriteProduct(_ product: Product) async {
         guard let user = await loadCurrentUser() else { return }
         

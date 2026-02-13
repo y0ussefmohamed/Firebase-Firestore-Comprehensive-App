@@ -16,6 +16,10 @@ A robust, feature-rich iOS application built with **SwiftUI** and **Firebase**, 
   - Favorites stored in each user's Firestore document — fully account-scoped.
   - Favorites persist across sign-out/sign-in sessions without data loss.
   - Dedicated Favorites tab with swipe-to-remove support.
+- **Clean Logout State Management**:
+  - Sort option, category filter, and price range are fully reset on logout or account deletion.
+  - Each user session starts with a fresh, default product browsing experience.
+  - No stale filter state leaks between accounts.
 - **Sophisticated Profile Management**:
   - Premium membership card with toggle.
   - Genre/preference management with array field operations.
@@ -47,7 +51,7 @@ A robust, feature-rich iOS application built with **SwiftUI** and **Firebase**, 
 ```text
 FirebaseTutorial/
 ├── App/                          # Application Entry Point
-├── Authentication Managers/      # Auth & Google Sign-In Helpers
+├── Firebase Auth/                # Auth & Google Sign-In Helpers
 ├── Core/
 │   ├── Authentication/           # Sign-In Views & ViewModels (Email, Google, Anonymous)
 │   ├── Products/
@@ -65,11 +69,7 @@ FirebaseTutorial/
 └── Assets.xcassets               # Images and brand assets
 ```
 
-<<<<<<< HEAD
 ## Setup Instructions
-=======
-## Setup Instructions
->>>>>>> e558512 (feat: per-user favorites, pagination, tab bar & safe re-login)
 
 1. Clone the repository:
    ```bash

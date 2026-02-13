@@ -93,12 +93,13 @@ extension AuthenticationManager {
         return result
     }
     
+    
     func updateEmail(newEmail: String) async throws {
         guard let user = Auth.auth().currentUser else {
             throw URLError(.badServerResponse)
         }
         
-        try await user.updateEmail(to: newEmail)
+        try await user.sendEmailVerification(beforeUpdatingEmail: newEmail)
     }
     
     func resetPassword(email: String) async throws {
@@ -167,3 +168,4 @@ extension AuthenticationManager {
         return try await linkCredential(credential)
     }
 }
+

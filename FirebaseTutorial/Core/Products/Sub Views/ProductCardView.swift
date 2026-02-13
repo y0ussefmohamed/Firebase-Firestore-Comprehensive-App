@@ -28,14 +28,11 @@ struct ProductCardView: View {
         .background(Color(uiColor: .systemBackground))
         .cornerRadius(16)
         .shadow(color: .black.opacity(0.1), radius: 5, x: 0, y: 2)
-        .onChange(of: viewModel.favoriteProductIds) { oldValue, newValue in
-            let currentlyInFavorites = newValue.contains(product.id)
-            if isFavorite != currentlyInFavorites {
-                isFavorite = currentlyInFavorites
-            }
-        }
         .onAppear {
             isFavorite = viewModel.isFavorite(product)
+        }
+        .onChange(of: viewModel.favoriteProductIds) { oldArray, newArray in
+            isFavorite = newArray.contains(product.id)
         }
     }
     

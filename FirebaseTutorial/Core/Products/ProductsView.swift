@@ -35,10 +35,18 @@ struct ProductsView: View {
             }
             .task {
                 await viewModel.getFavorites()
+                await viewModel.addListenerForFavoritesIds()
                 await updateProducts()
             }
             .onChange(of: selectedCategory)   { oldValue, newValue in Task { await updateProducts() } }
             .onChange(of: selectedSortOption) { oldValue, newValue in Task { await updateProducts() } }
+            .onChange(of: viewModel.didResetFilters) { _, _ in
+                // Reset local filter state when the user logs out / deletes account
+                selectedCategory = .all
+                selectedSortOption = .noFilter
+                minPrice = ""
+                maxPrice = ""
+            }
         }
     }
     

@@ -78,11 +78,17 @@ final class UserManager {
     static let shared = UserManager()
     private init() {}
     
+    private var favoriteProductsListener: ListenerRegistration?
+    
     private let userCollection = Firestore.firestore().collection("users")
     
     /// `userDocument` is a user Object from the fields that are not nil
     private func userDocument(userID: String) -> DocumentReference {
         return userCollection.document(userID)
+    }
+    
+    func deleteUser(userID: String) async throws {
+        try await userDocument(userID: userID).delete()
     }
     
     func createNewUser(from user: DBUser) throws {
@@ -155,7 +161,7 @@ final class UserManager {
     func addFavoriteProduct(product: Product, for user: DBUser) async throws {
         let encodedProduct = try Firestore.Encoder().encode(product)
         
-        let updates: [String: Any] = [ 
+        let updates: [String: Any] = [
             DBUser.CodingKeys.favorite_products.rawValue : FieldValue.arrayUnion([encodedProduct])
         ]
         
@@ -165,7 +171,7 @@ final class UserManager {
     func removeFavoriteProduct(product: Product, for user: DBUser) async throws {
         let encodedProduct = try Firestore.Encoder().encode(product)
         
-        let updates: [String: Any] = [ 
+        let updates: [String: Any] = [
             DBUser.CodingKeys.favorite_products.rawValue : FieldValue.arrayRemove([encodedProduct])
         ]
         
@@ -195,5 +201,26 @@ final class UserManager {
         }
         
         return products
+    }
+    
+    
+    func addListenerForFavoriteProducts(userId: String, completion: @escaping ([Product]) -> Void) {
+        let document = userDocument(userID: userId)
+        
+        self.favoriteProductsListener = document.addSnapshotListener { snapshot, error in
+            guard let document = snapshot else {
+                print("Error fetching document: \(error?.localizedDescription ?? "Unknown error")")
+                return
+            }
+            
+            if let user = try? document.data(as: DBUser.self) {
+                completion(user.favorite_products ?? [])
+            }
+        }
+    }
+    
+    func removeListenerForFavoriteProducts() {
+        favoriteProductsListener?.remove()
+        favoriteProductsListener = nil
     }
 }

@@ -39,7 +39,7 @@ struct FavoriteProductsView: View {
             .navigationTitle("Favorites")
             .onAppear {
                 Task {
-                    await viewModel.getFavorites()
+                    await viewModel.addListenerForFavorites()
                 }
             }
         }

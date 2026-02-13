@@ -15,6 +15,7 @@ final class SettingsViewModel: ObservableObject
     @Published var authProviders: [AuthProviderOption] = []
     
     let authManager = AuthenticationManager.shared
+    let userManager = UserManager.shared
     
     func loadAuthUser() {
         self.authUser = try? authManager.getAuthenticatedUser()
@@ -64,6 +65,9 @@ final class SettingsViewModel: ObservableObject
     
     func deleteAccount() async throws {
         try await authManager.delete()
+        if let userId = authUser?.uid {
+            try await userManager.deleteUser(userID: userId)
+        }
     }
     
     func linkAppleAccount() async throws {

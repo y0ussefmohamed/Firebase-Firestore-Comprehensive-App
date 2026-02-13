@@ -210,6 +210,39 @@ extension ProfileView {
         .padding(.vertical, 10)
     }
     
+    private func genresDisplay(user: DBUser) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("Your Preferences")
+                .font(.caption2)
+                .fontWeight(.bold)
+                .foregroundColor(.secondary)
+                .textCase(.uppercase)
+                .padding(.leading, 4)
+            
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 8) {
+                    ForEach(preferenceOptions, id: \.self) { option in
+                        let isSelected = preferenceIsSelected(option)
+                        Button {
+                            isSelected ? viewModel.removeUserPreferences(option) : viewModel.addUserPreferences(option)
+                        } label: {
+                            Text(option)
+                                .font(.system(size: 12, weight: .medium))
+                                .padding(.horizontal, 14)
+                                .padding(.vertical, 8)
+                                .background(isSelected ? Color.green : Color(.secondarySystemBackground))
+                                .foregroundColor(isSelected ? .white : .primary)
+                                .clipShape(Capsule())
+                        }
+                        .buttonStyle(.plain)
+                        .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isSelected)
+                    }
+                }
+            }
+        }
+    }
+
+    
     private func movieDisplay(user: DBUser) -> some View {
         Button {
             user.favoriteMovie == nil ? viewModel.addFavoriteMovie() : viewModel.removeFavoriteMovie()
@@ -249,38 +282,6 @@ extension ProfileView {
             .cornerRadius(12)
         }
         .buttonStyle(.plain)
-    }
-    
-    private func genresDisplay(user: DBUser) -> some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text("Your Preferences")
-                .font(.caption2)
-                .fontWeight(.bold)
-                .foregroundColor(.secondary)
-                .textCase(.uppercase)
-                .padding(.leading, 4)
-            
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 8) {
-                    ForEach(preferenceOptions, id: \.self) { option in
-                        let isSelected = preferenceIsSelected(option)
-                        Button {
-                            isSelected ? viewModel.removeUserPreferences(option) : viewModel.addUserPreferences(option)
-                        } label: {
-                            Text(option)
-                                .font(.system(size: 12, weight: .medium))
-                                .padding(.horizontal, 14)
-                                .padding(.vertical, 8)
-                                .background(isSelected ? Color.green : Color(.secondarySystemBackground))
-                                .foregroundColor(isSelected ? .white : .primary)
-                                .clipShape(Capsule())
-                        }
-                        .buttonStyle(.plain)
-                        .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isSelected)
-                    }
-                }
-            }
-        }
     }
 }
 
