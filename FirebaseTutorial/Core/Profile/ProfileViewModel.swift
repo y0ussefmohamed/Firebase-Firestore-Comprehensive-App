@@ -32,7 +32,7 @@ final class ProfileViewModel: ObservableObject
         
         Task { /// Use `Task` and don't use async await becase this function will be used in a Button
             do {
-                try await userManager.updateUser(isPremium: !isPremium, for: user)
+                try await userManager.updateUserPremiumStatus(isPremium: !isPremium, for: user)
                 self.user = try await userManager.getUser(userID: user.userId)
             } catch {
                 print(error)

@@ -73,7 +73,7 @@ final class ProductsViewModel: ObservableObject {
         }
     }
     
-    /// Fetches the next page using the stored filters and the last document cursor.
+    /// Used in view .task{}, fetches the next page using the stored filters and the last document cursor.
     func getNextPage() async {
         // Guard: don't fetch if there's nothing more or if we have no cursor yet
         guard hasMoreProducts, lastDocument != nil else {

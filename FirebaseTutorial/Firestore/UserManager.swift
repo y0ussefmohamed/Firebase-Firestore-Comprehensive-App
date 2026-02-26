@@ -114,7 +114,7 @@ final class UserManager {
         return try await userDocument(userID: userID).getDocument(as: DBUser.self)
     }
     
-    func updateUser(isPremium: Bool, for user: DBUser) async throws {
+    func updateUserPremiumStatus(isPremium: Bool, for user: DBUser) async throws {
         let updates: [String: Any] = [ /// this changes only the is_premium field inside this specifc document in users collection, not all the fields in document/object
             DBUser.CodingKeys.isPremium.rawValue : isPremium
         ]
@@ -185,7 +185,6 @@ final class UserManager {
             return []
         }
         
-        // Decode each product dictionary into a Product using Firestore.Decoder
         let decoder = Firestore.Decoder()
         var products: [Product] = []
         products.reserveCapacity(favoriteProductsData.count)
@@ -202,7 +201,6 @@ final class UserManager {
         
         return products
     }
-    
     
     func addListenerForFavoriteProducts(userId: String, completion: @escaping ([Product]) -> Void) {
         let document = userDocument(userID: userId)

@@ -11,9 +11,11 @@ import Combine
 
 final class ProductsManager {
     static let shared = ProductsManager()
+    
     private init() {}
     
     private let productsCollection = Firestore.firestore().collection("products")
+    
     private func productDocument(productId: String) -> DocumentReference {
         productsCollection.document(productId)
     }
@@ -61,6 +63,7 @@ final class ProductsManager {
     }
 }
 
+// MARK: - Used Before Pagination
 extension ProductsManager {
     func uploadProduct(product: Product) async throws {
         try productDocument(productId: String(product.id)).setData(from: product, merge: false)
@@ -72,22 +75,26 @@ extension ProductsManager {
         }
     }
     func getProduct(productId: String) async throws -> Product {
-        return try await productDocument(productId: productId).getDocument(as: Product.self)
+        return try await productDocument(productId: productId)
+            .getDocument(as: Product.self)
     }
     
     func getAllProducts() async throws -> [Product] {
-        return try await productsCollection.getDocuments(as: Product.self)
+        return try await productsCollection
+            .getDocuments(as: Product.self)
     }
     
     // MARK: - Queries (Old Non-Paginated Functions)
     func getProductsSortedByPrice(descending: Bool = false) async throws -> [Product] {
         return try await productsCollection
-            .order(by: Product.CodingKeys.price.rawValue, descending: descending).getDocuments(as: Product.self)
+            .order(by: Product.CodingKeys.price.rawValue, descending: descending)
+            .getDocuments(as: Product.self)
     }
     
     func getProductsForCategory(category: String) async throws -> [Product] {
         return try await productsCollection
-            .whereField(Product.CodingKeys.category.rawValue, isEqualTo: category).getDocuments(as: Product.self)
+            .whereField(Product.CodingKeys.category.rawValue, isEqualTo: category)
+            .getDocuments(as: Product.self)
     }
     
     /// `indexing` in Firestore should be enabled for this function to work properly
