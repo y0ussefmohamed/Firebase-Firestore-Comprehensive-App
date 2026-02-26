@@ -21,6 +21,7 @@ final class ProductsManager {
     }
     
     // MARK: - Pagination
+    /// This function return products and all filters is in the parameters, so no need for multiple filters
     func getAllProductsPaginated(
         count: Int,
         lastDocument: DocumentSnapshot?,

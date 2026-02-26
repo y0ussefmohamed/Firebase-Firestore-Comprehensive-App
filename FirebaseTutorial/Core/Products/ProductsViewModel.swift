@@ -36,7 +36,7 @@ final class ProductsViewModel: ObservableObject {
     
     // MARK: - Core Pagination Methods
     /// Fetches the first page of products. Resets pagination state and stores the current filters.
-    private func getProducts(
+    private func getFirstPageOfProducts(
         descending: Bool? = nil,
         category: String? = nil,
         priceRange: ClosedRange<Double>? = nil
@@ -75,7 +75,7 @@ final class ProductsViewModel: ObservableObject {
     
     /// Used in view .task{}, fetches the next page using the stored filters and the last document cursor.
     func getNextPage() async {
-        // Guard: don't fetch if there's nothing more or if we have no cursor yet
+        /// Guard: don't fetch if there's nothing more or if we have no cursor yet
         guard hasMoreProducts, lastDocument != nil else {
             print("[ViewModel] getNextPage skipped — hasMoreProducts: \(hasMoreProducts), lastDocument: \(String(describing: lastDocument))")
             return
@@ -117,7 +117,7 @@ final class ProductsViewModel: ObservableObject {
         lastDocument = nil
         hasMoreProducts = true
         
-        // Signal the View to reset its @State sort/category/price fields
+        // Signals the View to reset its @State sort/category/price fields
         didResetFilters.toggle()
         
         print("[ViewModel] User state reset — cached user, favorites, and filters cleared")
@@ -143,48 +143,49 @@ final class ProductsViewModel: ObservableObject {
     
     // MARK: - Public Query Methods (delegate to getProducts)
     func getAllProducts() async throws {
-        await getProducts()
+        await getFirstPageOfProducts()
     }
     
     func getProductsSortedByPrice(descending: Bool) {
         Task {
-            await getProducts(descending: descending)
+            await getFirstPageOfProducts(descending: descending)
         }
     }
     
     func getProductsForCategory(_ category: String) {
         Task {
-            await getProducts(category: category)
+            await getFirstPageOfProducts(category: category)
         }
     }
     
     func getProductsByPriceForCategory(descending: Bool, category: String) {
         Task {
-            await getProducts(descending: descending, category: category)
+            await getFirstPageOfProducts(descending: descending, category: category)
         }
     }
     
     func getProductsByPriceRange(startAt: Double, endAt: Double) {
         Task {
-            await getProducts(priceRange: startAt...endAt)
+            await getFirstPageOfProducts(priceRange: startAt...endAt)
         }
     }
     
     func getProductsByPriceRangeWithSortingOption(startAt: Double, endAt: Double, sortOption: Bool) {
         Task {
-            await getProducts(descending: sortOption, priceRange: startAt...endAt)
+            await getFirstPageOfProducts(descending: sortOption, priceRange: startAt...endAt)
         }
     }
     
     func getProductsByPriceRangeForCategory(startAt: Double, endAt: Double, category: String) {
         Task {
-            await getProducts(category: category, priceRange: startAt...endAt)
+            await getFirstPageOfProducts(category: category, priceRange: startAt...endAt)
         }
     }
     
-    func getProductsByPriceRangeWithSortingOptionForCategory(startAt: Double, endAt: Double, category: String, sortOption: Bool) {
+    func getProductsByPriceRangeWithSortingOptionForCategory(startAt: Double, endAt: Double, category: String, sortOption: Bool)
+    {
         Task {
-            await getProducts(descending: sortOption, category: category, priceRange: startAt...endAt)
+            await getFirstPageOfProducts(descending: sortOption, category: category, priceRange: startAt...endAt)
         }
     }
     
@@ -203,7 +204,7 @@ final class ProductsViewModel: ObservableObject {
         guard let user = await loadCurrentUser() else { return }
             
         userManager.addListenerForFavoriteProducts(userId: user.userId) { [weak self] returnedFavoriteProducts in
-            let returnedFavoriteProdcutsIds = Set(returnedFavoriteProducts.map { $0.id })
+            let returnedFavoriteProdcutsIds = Set(returnedFavoriteProducts.map { $0.id }) /// map products to id first
             self?.favoriteProductIds = returnedFavoriteProdcutsIds
         }
     }

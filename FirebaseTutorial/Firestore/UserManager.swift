@@ -191,8 +191,8 @@ final class UserManager {
         
         for productMap in favoriteProductsData {
             do {
-                let decoded = try decoder.decode(Product.self, from: productMap)
-                products.append(decoded)
+                let decodedProduct = try decoder.decode(Product.self, from: productMap)
+                products.append(decodedProduct)
             } catch {
                 print("[UserManager] Failed to decode favorite product: \(error)")
                 continue
