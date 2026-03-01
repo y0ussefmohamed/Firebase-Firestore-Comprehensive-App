@@ -13,8 +13,27 @@ struct ProductsView: View {
     @State private var selectedCategory: CategoryFilter = .all
     @State private var selectedSortOption: SortOption = .noFilter
     
+    private var activeCategory: String? {
+        selectedCategory == .all ? nil : selectedCategory.rawValue
+    }
+    
     @State private var minPrice: String = ""
     @State private var maxPrice: String = ""
+    
+    private var activePriceRange: ClosedRange<Double>? {
+        if minPrice.isEmpty && maxPrice.isEmpty {
+            return nil
+        }
+        
+        let min = Double(minPrice) ?? 0
+        let max = Double(maxPrice) ?? 9999999
+        
+        guard min <= max else {
+            return nil
+        }
+        
+        return min...max
+    }
     
     private let columns = [
         GridItem(.flexible(), spacing: 16),
@@ -36,10 +55,26 @@ struct ProductsView: View {
             .task {
                 await viewModel.getFavorites()
                 await viewModel.addListenerForFavoritesIds()
-                await updateProducts()
+                await viewModel.getAllProducts()
             }
-            .onChange(of: selectedCategory)   { oldValue, newValue in Task { await updateProducts() } }
-            .onChange(of: selectedSortOption) { oldValue, newValue in Task { await updateProducts() } }
+            .onChange(of: selectedCategory)   { oldValue, newValue in
+                Task {
+                        await viewModel.getAllProducts(
+                            descending: selectedSortOption.isDescending,
+                            category: activeCategory,
+                            priceRange: activePriceRange
+                        )
+                    }
+            }
+            .onChange(of: selectedSortOption) { oldValue, newValue in
+                Task {
+                        await viewModel.getAllProducts(
+                            descending: newValue.isDescending,
+                            category: activeCategory,
+                            priceRange: activePriceRange
+                        )
+                    }
+            }
             .onChange(of: viewModel.didResetFilters) { _, _ in
                 selectedCategory = .all
                 selectedSortOption = .noFilter
@@ -49,45 +84,7 @@ struct ProductsView: View {
         }
     }
     
-    @MainActor
-    private func updateProducts() async {
-        // Hides the Keyboard
-        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
-        
-        let start = Double(minPrice) ?? 0
-        let end = Double(maxPrice) ?? Double.infinity
-        let isFilteredByPrice = !minPrice.isEmpty || !maxPrice.isEmpty
-
-        if selectedCategory == .all {
-            if let descending = selectedSortOption.isDescending {
-                if isFilteredByPrice {
-                    viewModel.getProductsByPriceRangeWithSortingOption(startAt: start, endAt: end, sortOption: descending)
-                } else {
-                    viewModel.getProductsSortedByPrice(descending: descending)
-                }
-            } else {
-                if isFilteredByPrice {
-                    viewModel.getProductsByPriceRange(startAt: start, endAt: end)
-                } else {
-                    try? await viewModel.getAllProducts()
-                }
-            }
-        } else {
-            if let descending = selectedSortOption.isDescending {
-                if isFilteredByPrice {
-                    viewModel.getProductsByPriceRangeWithSortingOptionForCategory(startAt: start, endAt: end, category: selectedCategory.rawValue, sortOption: descending)
-                } else {
-                    viewModel.getProductsByPriceForCategory(descending: descending, category: selectedCategory.rawValue)
-                }
-            } else {
-                if isFilteredByPrice {
-                    viewModel.getProductsByPriceRangeForCategory(startAt: start, endAt: end, category: selectedCategory.rawValue)
-                } else {
-                    viewModel.getProductsForCategory(selectedCategory.rawValue)
-                }
-            }
-        }
-    }
+    
 }
 
 
@@ -144,7 +141,9 @@ extension ProductsView {
                         withAnimation {
                             minPrice = ""
                             maxPrice = ""
-                            Task { try? await viewModel.getAllProducts() }
+                            Task {
+                                await viewModel.getAllProducts(descending: selectedSortOption.isDescending, category: activeCategory)
+                            }
                         }
                     } label: {
                         Image(systemName: "xmark.circle.fill")
@@ -153,11 +152,15 @@ extension ProductsView {
                     }
                 }
                 
-                // Apply Button
+                // Get Button
                 Button {
                     Task {
-                        await updateProducts()
-                    }
+                            await viewModel.getAllProducts(
+                                descending: selectedSortOption.isDescending,
+                                category: activeCategory,
+                                priceRange: activePriceRange
+                            )
+                        }
                 } label: {
                     Text("Get")
                         .fontWeight(.semibold)

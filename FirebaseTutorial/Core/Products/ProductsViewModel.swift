@@ -141,54 +141,6 @@ final class ProductsViewModel: ObservableObject {
         }
     }
     
-    // MARK: - Public Query Methods (delegate to getProducts)
-    func getAllProducts() async throws {
-        await getFirstPageOfProducts()
-    }
-    
-    func getProductsSortedByPrice(descending: Bool) {
-        Task {
-            await getFirstPageOfProducts(descending: descending)
-        }
-    }
-    
-    func getProductsForCategory(_ category: String) {
-        Task {
-            await getFirstPageOfProducts(category: category)
-        }
-    }
-    
-    func getProductsByPriceForCategory(descending: Bool, category: String) {
-        Task {
-            await getFirstPageOfProducts(descending: descending, category: category)
-        }
-    }
-    
-    func getProductsByPriceRange(startAt: Double, endAt: Double) {
-        Task {
-            await getFirstPageOfProducts(priceRange: startAt...endAt)
-        }
-    }
-    
-    func getProductsByPriceRangeWithSortingOption(startAt: Double, endAt: Double, sortOption: Bool) {
-        Task {
-            await getFirstPageOfProducts(descending: sortOption, priceRange: startAt...endAt)
-        }
-    }
-    
-    func getProductsByPriceRangeForCategory(startAt: Double, endAt: Double, category: String) {
-        Task {
-            await getFirstPageOfProducts(category: category, priceRange: startAt...endAt)
-        }
-    }
-    
-    func getProductsByPriceRangeWithSortingOptionForCategory(startAt: Double, endAt: Double, category: String, sortOption: Bool)
-    {
-        Task {
-            await getFirstPageOfProducts(descending: sortOption, category: category, priceRange: startAt...endAt)
-        }
-    }
-    
     // MARK: - Favorite (Per-User)
     /// for `FavoritesView`
     func addListenerForFavorites() async {
@@ -250,5 +202,57 @@ final class ProductsViewModel: ObservableObject {
     
     func isFavorite(_ product: Product) -> Bool {
         return favoriteProductIds.contains(product.id)
+    }
+}
+
+extension ProductsViewModel {
+    // MARK: - Public Query Methods (delegate to getProducts)
+    func getAllProducts(descending: Bool? = nil,
+                        category: String? = nil,
+                        priceRange: ClosedRange<Double>? = nil) async {
+        await getFirstPageOfProducts(descending: descending, category: category, priceRange: priceRange)
+    }
+    
+    func getProductsSortedByPrice(descending: Bool) {
+        Task {
+            await getFirstPageOfProducts(descending: descending)
+        }
+    }
+    
+    func getProductsForCategory(_ category: String) {
+        Task {
+            await getFirstPageOfProducts(category: category)
+        }
+    }
+    
+    func getProductsByPriceForCategory(descending: Bool, category: String) {
+        Task {
+            await getFirstPageOfProducts(descending: descending, category: category)
+        }
+    }
+    
+    func getProductsByPriceRange(startAt: Double, endAt: Double) {
+        Task {
+            await getFirstPageOfProducts(priceRange: startAt...endAt)
+        }
+    }
+    
+    func getProductsByPriceRangeWithSortingOption(startAt: Double, endAt: Double, sortOption: Bool) {
+        Task {
+            await getFirstPageOfProducts(descending: sortOption, priceRange: startAt...endAt)
+        }
+    }
+    
+    func getProductsByPriceRangeForCategory(startAt: Double, endAt: Double, category: String) {
+        Task {
+            await getFirstPageOfProducts(category: category, priceRange: startAt...endAt)
+        }
+    }
+    
+    func getProductsByPriceRangeWithSortingOptionForCategory(startAt: Double, endAt: Double, category: String, sortOption: Bool)
+    {
+        Task {
+            await getFirstPageOfProducts(descending: sortOption, category: category, priceRange: startAt...endAt)
+        }
     }
 }

@@ -64,10 +64,11 @@ final class SettingsViewModel: ObservableObject
     }
     
     func deleteAccount() async throws {
-        try await authManager.delete()
-        if let userId = authUser?.uid {
+        if let userId = authUser?.uid { /// delete from the userManager first because of the `Security Rules`
             try await userManager.deleteUser(userID: userId)
         }
+        
+        try await authManager.deleteUser()
     }
     
     func linkAppleAccount() async throws {

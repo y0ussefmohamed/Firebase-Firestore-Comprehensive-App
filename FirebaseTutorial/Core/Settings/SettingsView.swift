@@ -50,8 +50,12 @@ struct SettingsView: View {
         }
         .navigationTitle("Settings")
         .alert("Delete Account?", isPresented: $showDeleteAlert) {
-            Button("Delete", role: .destructive) { deleteAccount() }
-            Button("Cancel", role: .cancel) { }
+            Button("Delete", role: .destructive) {
+                deleteAccount()
+            }
+            Button("Cancel", role: .cancel) {
+                
+            }
         } message: {
             Text("Are you sure you want to permanently delete your account?")
         }
@@ -109,12 +113,16 @@ extension SettingsView {
 // MARK: - Actions
 extension SettingsView {
     private func logout() {
-        do {
-            try viewModel.logout()
-            productsViewModel.resetUserState()
-            showSignInView = true
-        } catch {
-            print("Error logging out: \(error)")
+        Task {
+            do {
+                try viewModel.logout()
+                await MainActor.run {
+                    productsViewModel.resetUserState()
+                    showSignInView = true
+                }
+            } catch {
+                print("Error logging out: \(error)")
+            }
         }
     }
     
@@ -122,8 +130,10 @@ extension SettingsView {
         Task {
             do {
                 try await viewModel.deleteAccount()
-                productsViewModel.resetUserState()
-                showSignInView = true
+                await MainActor.run {
+                    productsViewModel.resetUserState()
+                    showSignInView = true
+                }
             } catch {
                 print("Error deleting account: \(error)")
             }

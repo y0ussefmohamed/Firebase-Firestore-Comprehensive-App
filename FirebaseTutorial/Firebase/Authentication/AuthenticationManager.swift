@@ -62,7 +62,7 @@ final class AuthenticationManager {
         return providers
     }
     
-    func delete() async throws {
+    func deleteUser() async throws {
         guard let user = Auth.auth().currentUser else {
             throw URLError(.unknown)
         }
